@@ -34,3 +34,7 @@ Show details:
     3.Humidity
     4.Wind speed
     5.“Feels like” temperature
+
+
+
+    testing api key : https://api.openweathermap.org/data/2.5/weather?q=London&appid=API_KEY&units=metric
