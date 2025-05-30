@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f3;
+      padding: 20px;
+    }
+    .weather-app {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .weather-display {
+      margin-top: 20px;
+    }
+    .forecast {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .day {
+      width: 30%;
+      margin-bottom: 15px;
+      background: #f0f8ff;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .icon {
+      height: 50px;
+    }
+  </style>
+</head>
+<body>
+  <div class="weather-app">
+    <h2>Weather App</h2>
+    <input type="text" id="locationInput" placeholder="Enter City, Zip, or GPS coordinates" />
+    <button onclick="getWeather()">Get Weather</button>
+    <button onclick="getWeatherByLocation()">Use My Location</button>
+    <div class="weather-display" id="weatherDisplay"></div>
+    <div class="forecast" id="forecast"></div>
+  </div>
+
+  <script>
+    const apiKey = 'd00cfb62e4b54809a3923806253005'; // API key , active key given
+
+    async function getWeather() {
+      const query = document.getElementById('locationInput').value;
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${query}&appid=${apiKey}&units=metric`;
+      const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${query}&appid=${apiKey}&units=metric`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        displayCurrentWeather(data);
+
+        const resForecast = await fetch(forecastUrl);
+        const dataForecast = await resForecast.json();
+        displayForecast(dataForecast);
+      } catch (err) {
+        alert('Error fetching weather data.');
+      }
+    }
+
+    function displayCurrentWeather(data) {
+      const container = document.getElementById('weatherDisplay');
+      container.innerHTML = `
+        <h3>${data.name}</h3>
+        <img class="icon" src="http://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="weather icon" />
+        <p><strong>${data.weather[0].main}</strong>: ${data.weather[0].description}</p>
+        <p>Temp: ${data.main.temp} °C</p>
+        <p>Feels like: ${data.main.feels_like} °C</p>
+        <p>Humidity: ${data.main.humidity}%</p>
+        <p>Wind: ${data.wind.speed} m/s</p>
+      `;
+    }
+
+    function displayForecast(data) {
+      const container = document.getElementById('forecast');
+      container.innerHTML = '';
+
+      const daily = {};
+      data.list.forEach(item => {
+        const date = item.dt_txt.split(' ')[0];
+        if (!daily[date]) {
+          daily[date] = item;
+        }
+      });
+
+      const days = Object.values(daily).slice(1, 6);
+
+      days.forEach(day => {
+        container.innerHTML += `
+          <div class="day">
+            <p>${day.dt_txt.split(' ')[0]}</p>
+            <img class="icon" src="http://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png" alt="weather icon" />
+            <p>${day.weather[0].main}</p>
+            <p>${day.main.temp} °C</p>
+          </div>
+        `;
+      });
+    }
+
+    function getWeatherByLocation() {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+        const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          displayCurrentWeather(data);
+
+          const resForecast = await fetch(forecastUrl);
+          const dataForecast = await resForecast.json();
+          displayForecast(dataForecast);
+        } catch (err) {
+          alert('Error fetching location-based weather data.');
+        }
+      }, () => alert('Could not get location.'));
+    }
+  </script>
+</body>
+</html>
